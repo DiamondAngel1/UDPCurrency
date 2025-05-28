@@ -11,6 +11,7 @@ Console.WriteLine("Сервер запущено на порту 2004...");
 HashSet<IPEndPoint> clients = new();
 Dictionary<IPEndPoint, int> clientRequests = new();
 const int maxRequests = 3;
+const int maxClients = 4;
 TimeSpan resetTime = TimeSpan.FromMinutes(1);
 
 Dictionary<string, decimal> exchangeRates = new()
@@ -39,6 +40,13 @@ while (true){
         blockedClients.Remove(remoteEndPoint);
         clientRequests[remoteEndPoint] = 0;
         Console.WriteLine($"Клієнт {remoteEndPoint} розблокований | Час: {DateTime.UtcNow}");
+    }
+    if (clients.Count>=maxClients&&!clients.Contains(remoteEndPoint))
+    {
+        string overloadMessage = $"Сервер перевантажений. Спробуйте пізніше.";
+        udpServer.Send(Encoding.UTF8.GetBytes(overloadMessage), remoteEndPoint);
+        Console.WriteLine($"Сервер перевантажений. Клієнт {remoteEndPoint} не може підключитися");
+        continue;
     }
     if (!clients.Contains(remoteEndPoint))
     {
@@ -70,7 +78,7 @@ while (true){
         response = "Сервер завершує роботу";
         Console.WriteLine($"{remoteEndPoint} відключився | Час: {DateTime.Now}");
         clients.Remove(remoteEndPoint);
-        break;
+        continue;
     }
     else{
         response = "Некоректний запит";
