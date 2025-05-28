@@ -8,6 +8,32 @@ Console.InputEncoding = Encoding.UTF8;
 UdpClient udpClient = new UdpClient();
 IPEndPoint serverEndPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 2004);
 
+Console.WriteLine("Введіть ім'я користувача:");
+string username = Console.ReadLine();
+Console.WriteLine("Введіть пароль:");
+string password = Console.ReadLine();
+
+string authRequest = $"{username} {password}";
+await udpClient.SendAsync(Encoding.UTF8.GetBytes(authRequest), serverEndPoint);
+UdpReceiveResult authResult = await udpClient.ReceiveAsync();
+string authResponse = Encoding.UTF8.GetString(authResult.Buffer);
+if(authResponse.Contains("Невірне ім'я користувача або пароль")){
+    Console.WriteLine(authResponse);
+    udpClient.Close();
+    return;
+}
+else if (authResponse.Contains("Сервер перевантажений. Спробуйте пізніше.")){
+    Console.WriteLine(authResponse);
+    udpClient.Close();
+    return;
+}
+else if (authResponse.Contains("Ви перевищили ліміт запитів")){
+    Console.WriteLine(authResponse);
+    udpClient.Close();
+    return;
+}
+Console.WriteLine(authResponse);
+
 while (true){
     Console.WriteLine("Валюти (USD, EURO, UAH, BRL)");
     Console.WriteLine("Введіть запит (наприклад, 'USD EURO'), або 'exit' для виходу:");
